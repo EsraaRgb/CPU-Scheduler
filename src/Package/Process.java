@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 public class Process {
     public String name;
-    public boolean dead=false;
+    public boolean isCompleted=false;
     public int arrivalTime;
     public int burstTime;
     public int remainingBurstTime;
