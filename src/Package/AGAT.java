@@ -12,13 +12,16 @@ public class AGAT {
     public ArrayList<Process> processes = new ArrayList<>();
     public ArrayList<Process> readyQueue= new ArrayList<>();
     public ArrayList<Process> deadList = new ArrayList<>();
+    public AGAT(ArrayList<Process> p) {
 
-    public AGAT(ArrayList<Process> processes) {
-        calculateV1();
-        calculateV2();
-        calculateAGATFactor();
-        this.processes = processes;
+        for (int i=0;i<p.size();i++){
+            Process process=new Process(p.get(i).name, p.get(i).arrivalTime,p.get(i).burstTime,p.get(i).priority,p.get(i).quantum);
+            processes.add(process);
+        }
         this.processes.sort(new Process.ArrivalTimeComparator());
+        readyQueue.add(processes.get(0));
+        calculateV1();
+        calculateAGATFactor();
         processAGAT();
     }
 
@@ -28,68 +31,64 @@ public class AGAT {
                 V1=(processes.get((processes.size()-1)).arrivalTime)/10.0;
             }
             else V1=1;
+            System.out.println("V1 = "+V1);
         }
     }
     public void calculateV2 (){
         if (processes!=null){
-            ArrayList<Process> p = processes;
+            ArrayList<Process> p =new ArrayList<Process>();
+            for (int i=0;i<processes.size();i++){
+                Process process=new Process(processes.get(i).name, processes.get(i).arrivalTime,processes.get(i).burstTime,processes.get(i).priority,processes.get(i).quantum);
+                p.add(process);
+            }
             p.sort(new Process.RemainingBurstComparator());
             if (p.get((p.size()-1)).remainingBurstTime>10){
                 V2=(p.get((p.size()-1)).remainingBurstTime)/10.0;
             }
             else V2=1;
+            System.out.println("V2 = "+V2);
         }
     }
     public void calculateAGATFactor (){
+        calculateV2();
         for (Process p : processes){
             p.AGAT_Factor=(int)((10-p.priority)+Math.ceil(p.arrivalTime/V1)+Math.ceil(p.remainingBurstTime/V2));
         }
     }
     public int checkArrival(){
-        int nextArrival;
-        for (int i =0 ;i<processes.size();i++){
-            while (processes.get(i).arrivalTime<=currentTime && !readyQueue.contains(processes.get(i))){
-                readyQueue.add(processes.get(i));
+        int nextArrival=0;
+        if (processes!=null){
+            for (int i =0;i<processes.size();i++){
+                if (processes.get(i).arrivalTime <= currentTime ){
+                    for (int j=0;j<readyQueue.size();j++){
+                        if (!Objects.equals(processes.get(i).name, readyQueue.get(j).name)){
+                            readyQueue.add(processes.get(i));
+                        }
+                    }
+                }
             }
-            break;
         }
         readyQueue.sort(new Process.ArrivalTimeComparator());
-        nextArrival=readyQueue.get(readyQueue.size()-1).arrivalTime;
-        for (int i=0;i<processes.size();i++){
-            if(processes.get(i).arrivalTime>nextArrival){
-                nextArrival=processes.get(i).arrivalTime;
-                break;
+        if (readyQueue!=null){
+            for (Process p : readyQueue){
+                if (p.arrivalTime>nextArrival){
+                    nextArrival=p.arrivalTime;
+                }
+            }
+            for (Process process : processes) {
+                if (process.arrivalTime > nextArrival) {
+                    nextArrival = process.arrivalTime;
+                    break;
+                }
             }
         }
+
         readyQueue.sort(new Process.AGATFactorComparator());
+        System.out.println("nextArrival = " +nextArrival);
+
         return nextArrival;
     }
-    public void executeProcess(){
-        int start=currentTime,executionTime=0;
-        checkArrival();
-        runningProcess=readyQueue.get(0);
-        executionTime=(int)Math.round(.04*runningProcess.quantum);
-        int nextArrival=checkArrival();
-        if(readyQueue.size()!=1){
-                if(checkNext()){
-                    runningProcess.remainingQuantum-=executionTime;
-                }
-                else{
-                    runningProcess.remainingQuantum=0;
-                    executionTime=runningProcess.quantum;
-                }
-                removeProcess();
 
-        }
-        else{
-            executionTime=nextArrival-start;
-            runningProcess.remainingQuantum-=executionTime;
-        }
-        runningProcess.remainingBurstTime-=executionTime;
-        currentTime+=executionTime;//+contextSwitch;
-        removeProcess();
-        System.out.println(runningProcess.name+"\t from"+start + "to "+currentTime);
-    }
     public boolean checkNext(){
         for (Process p : readyQueue){
             if(p.AGAT_Factor<runningProcess.AGAT_Factor){
@@ -113,14 +112,42 @@ public class AGAT {
                 runningProcess.remainingQuantum=0;
                 deadList.add(runningProcess);
             }
-            readyQueue.remove(runningProcess);
+
         }
     }
 
     public void processAGAT(){
         // update ready queue with last arrived processes.
+        int start,executionTime;
         while (deadList.size()!=processes.size()){
-            executeProcess();
+            start=currentTime;
+            checkArrival();
+            runningProcess=readyQueue.get(0);
+            executionTime=(int)Math.round(.4*runningProcess.quantum);
+            System.out.println(executionTime);
+            currentTime+=executionTime;
+            runningProcess.remainingQuantum-=executionTime;
+            runningProcess.remainingBurstTime-=executionTime;
+            int nextArrival=checkArrival();
+            if(readyQueue.size()>1){
+                if(checkNext()){
+                    runningProcess.remainingQuantum-=executionTime;
+                }
+                else{
+                    executionTime=runningProcess.quantum-runningProcess.remainingQuantum;
+                    runningProcess.remainingQuantum=0;
+
+                }
+            }
+            if (readyQueue.size()==1){
+                executionTime=nextArrival-currentTime;
+                runningProcess.remainingQuantum-=executionTime;
+            }
+            runningProcess.remainingBurstTime-=executionTime;
+            System.out.println("execution time "+ executionTime);
+            currentTime+=executionTime;//+contextSwitch;
+            removeProcess();
+            System.out.println(runningProcess.name+"\t from "+start + " to "+currentTime);
         }
 
     }

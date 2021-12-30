@@ -1,6 +1,6 @@
 package Package;
 
-        import java.util.Comparator;
+import java.util.Comparator;
 
 public class Process {
     public String name;
@@ -89,6 +89,61 @@ public class Process {
         public int compare(Process p1, Process p2) {
             return Integer.compare(p1.AGAT_Factor, p2.AGAT_Factor);
         }
+    }
+    public void setName(String name)
+    {
+        this.name=name;
+    }
+    public String getName()
+    {
+        return name;
+    }
+    public void setArrivalTime(int arrivalTime)
+    {
+        this.arrivalTime=arrivalTime;
+    }
+    public int getArrivalTime()
+    {
+        return arrivalTime;
+    }
+    public void setBurstTime(int burstTime)
+    {
+        this.burstTime=burstTime;
+    }
+    public int getBurstTime()
+    {
+        return burstTime;
+    }
+    public void setPriority(int priority)
+    {
+        this.priority=priority;
+    }
+    public int getPriority()
+    {
+        return priority;
+    }
+    public void setEndTime (int endTime)
+    {
+        this.endTime=endTime;
+    }
+    public int getEndTime () {
+        return endTime;
+    }
+    public void setWaitingTime (int waitingTime)
+    {
+        this.waitingTime=waitingTime;
+    }
+    public int getWaitingTime ()
+    {
+        return waitingTime;
+    }
+    public void setTurnAroundTime (int turnaroundTime)
+    {
+        this.turnaroundTime=turnaroundTime;
+    }
+    public int getTurnAroundTime ()
+    {
+        return turnaroundTime;
     }
 
 }
